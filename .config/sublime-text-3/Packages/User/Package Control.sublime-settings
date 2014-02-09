@@ -1,0 +1,11 @@
+{
+	"auto_upgrade_last_run": null,
+	"installed_packages":
+	[
+		"Cython",
+		"Package Control",
+		"SublimeGit",
+		"Theme - Soda",
+		"Wrap Plus"
+	]
+}

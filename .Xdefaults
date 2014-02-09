@@ -1,0 +1,52 @@
+! urxvt ----------------------------------------------------------------------
+
+URxvt.scrollBar: false
+URxvt.font: xft:terminus:size=8:antialias=false
+URxvt.boldFont: xft:terminus:size=8:antialias=false
+URxvt.perl-ext:      default,url-select
+URxvt.keysym.M-u:    perl:url-select:select_next
+URxvt.urlLauncher:      /usr/bin/firefox
+URxvt.underlineURLs: true
+URxvt.geometry: 81x24
+URxvt.iconFile: /usr/share/icons/AwOken/clear/128x128/apps/terminal2.png
+URxvt*iso14755: False
+URxvt*iso14755_52: False
+
+!URxvt*background:  #333333
+!URxvt*foreground:  #ffffff
+URxvt*background:  #1b1b1b
+URxvt*foreground:  #d9d9d9
+
+! black
+URxvt*color0:  #1b1b1b
+URxvt*color8:  #6d7676
+
+! red
+URxvt*color1:  #d22222
+URxvt*color9:  #d23d3d
+
+! green
+#URxvt*color2:   #2ec922
+#URxvt*color10:  #60c958
+URxvt*color2:   #99cf50
+URxvt*color10:  #65b042
+
+! yellow
+URxvt*color3:   #eab93d
+URxvt*color11:  #ffc123
+
+! blue
+URxvt*color4:   #204a87
+URxvt*color12:  #3465a4
+
+! magenta
+URxvt*color5:   #9e6ffe
+URxvt*color13:  #9e6ffe
+
+! cyan
+URxvt*color6:   #46a4ff
+URxvt*color14:  #89b6e2
+
+! white
+URxvt*color7:   #a1a1a1
+URxvt*color15:  #d9d9d9
