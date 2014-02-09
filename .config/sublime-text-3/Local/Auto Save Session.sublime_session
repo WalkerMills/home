@@ -6,17 +6,21 @@
 		"/home/walker/code/bitbot"
 	],
 	"last_version": 3059,
-	"last_window_id": 19,
+	"last_window_id": 20,
 	"log_indexing": false,
 	"settings":
 	{
-		"new_window_height": 0.0,
+		"new_window_height": 1422.0,
 		"new_window_settings":
 		{
 			"auto_complete":
 			{
 				"selected_items":
 				[
+					[
+						"S",
+						"SRCS"
+					]
 				]
 			},
 			"build_system": "",
@@ -50,15 +54,16 @@
 			},
 			"file_history":
 			[
+				"/home/walker/.zshenv",
+				"/home/walker/.zshrc",
 				"/home/walker/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 				"/home/walker/bin/startt",
-				"/home/walker/.zshenv",
 				"/home/walker/.zprofile",
 				"/home/walker/.config/sublime-text-3/Packages/User/Preferences.sublime-settings"
 			],
 			"find":
 			{
-				"height": 0.0
+				"height": 24.0
 			},
 			"find_in_files":
 			{
@@ -69,16 +74,22 @@
 			},
 			"find_state":
 			{
-				"case_sensitive": false,
+				"case_sensitive": true,
 				"find_history":
 				[
+					"\\t",
+					"SRC",
+					"src"
 				],
 				"highlight": true,
-				"in_selection": false,
+				"in_selection": true,
 				"preserve_case": false,
-				"regex": false,
+				"regex": true,
 				"replace_history":
 				[
+					"    ",
+					"HDR",
+					"hdr"
 				],
 				"reverse": false,
 				"show_context": true,
@@ -88,7 +99,7 @@
 			},
 			"incremental_find":
 			{
-				"height": 0.0
+				"height": 24.0
 			},
 			"input":
 			{
@@ -101,7 +112,7 @@
 			},
 			"replace":
 			{
-				"height": 0.0
+				"height": 64.0
 			},
 			"save_all_on_build": true,
 			"select_file":
@@ -138,7 +149,7 @@
 			{
 			}
 		},
-		"new_window_width": 0.0
+		"new_window_width": 1920.0
 	},
 	"windows":
 	[
@@ -364,7 +375,7 @@
 									"translate_tabs_to_spaces": true
 								},
 								"translation.x": 0.0,
-								"translation.y": 1232.0,
+								"translation.y": 1472.0,
 								"zoom_level": 1.0
 							},
 							"stack_index": 0,
@@ -515,6 +526,258 @@
 			{
 			},
 			"window_id": 1,
+			"workspace_name": ""
+		},
+		{
+			"auto_complete":
+			{
+				"selected_items":
+				[
+					[
+						"S",
+						"SRCS"
+					]
+				]
+			},
+			"buffers":
+			[
+				{
+					"contents": "\n",
+					"settings":
+					{
+						"buffer_size": 1,
+						"line_ending": "Unix"
+					}
+				},
+				{
+					"file": "/home/walker/code/cryptobot/web/settings.py",
+					"settings":
+					{
+						"buffer_size": 2797,
+						"line_ending": "Unix"
+					}
+				}
+			],
+			"build_system": "",
+			"command_palette":
+			{
+				"height": 72.0,
+				"selected_items":
+				[
+					[
+						"Package Control: In",
+						"Package Control: Install Package"
+					]
+				],
+				"width": 449.0
+			},
+			"console":
+			{
+				"height": 0.0,
+				"history":
+				[
+				]
+			},
+			"distraction_free":
+			{
+				"menu_visible": true,
+				"show_minimap": false,
+				"show_open_files": false,
+				"show_tabs": false,
+				"side_bar_visible": false,
+				"status_bar_visible": false
+			},
+			"file_history":
+			[
+				"/home/walker/.zshenv",
+				"/home/walker/.zshrc",
+				"/home/walker/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+				"/home/walker/bin/startt",
+				"/home/walker/.zprofile",
+				"/home/walker/.config/sublime-text-3/Packages/User/Preferences.sublime-settings"
+			],
+			"find":
+			{
+				"height": 24.0
+			},
+			"find_in_files":
+			{
+				"height": 0.0,
+				"where_history":
+				[
+				]
+			},
+			"find_state":
+			{
+				"case_sensitive": true,
+				"find_history":
+				[
+					"\\t",
+					"SRC",
+					"src"
+				],
+				"highlight": true,
+				"in_selection": true,
+				"preserve_case": false,
+				"regex": true,
+				"replace_history":
+				[
+					"    ",
+					"HDR",
+					"hdr"
+				],
+				"reverse": false,
+				"show_context": true,
+				"use_buffer2": true,
+				"whole_word": false,
+				"wrap": true
+			},
+			"groups":
+			[
+				{
+					"selected": 1,
+					"sheets":
+					[
+						{
+							"buffer": 0,
+							"semi_transient": false,
+							"settings":
+							{
+								"buffer_size": 1,
+								"regions":
+								{
+								},
+								"selection":
+								[
+									[
+										1,
+										1
+									]
+								],
+								"settings":
+								{
+									"auto_name": "",
+									"syntax": "Packages/Text/Plain text.tmLanguage"
+								},
+								"translation.x": 0.0,
+								"translation.y": 0.0,
+								"zoom_level": 1.0
+							},
+							"stack_index": 1,
+							"type": "text"
+						},
+						{
+							"buffer": 1,
+							"file": "/home/walker/code/cryptobot/web/settings.py",
+							"semi_transient": false,
+							"settings":
+							{
+								"buffer_size": 2797,
+								"regions":
+								{
+								},
+								"selection":
+								[
+									[
+										1721,
+										1736
+									]
+								],
+								"settings":
+								{
+									"syntax": "Packages/Python/Python.tmLanguage",
+									"tab_size": 4,
+									"translate_tabs_to_spaces": true
+								},
+								"translation.x": -0.0,
+								"translation.y": 240.0,
+								"zoom_level": 1.0
+							},
+							"stack_index": 0,
+							"type": "text"
+						}
+					]
+				}
+			],
+			"incremental_find":
+			{
+				"height": 24.0
+			},
+			"input":
+			{
+				"height": 0.0
+			},
+			"layout":
+			{
+				"cells":
+				[
+					[
+						0,
+						0,
+						1,
+						1
+					]
+				],
+				"cols":
+				[
+					0.0,
+					1.0
+				],
+				"rows":
+				[
+					0.0,
+					1.0
+				]
+			},
+			"menu_visible": true,
+			"output.find_results":
+			{
+				"height": 0.0
+			},
+			"position": "0,0,0,0,0,640,18,2560,1440,2560,1440",
+			"project": "",
+			"replace":
+			{
+				"height": 44.0
+			},
+			"save_all_on_build": true,
+			"select_file":
+			{
+				"height": 0.0,
+				"selected_items":
+				[
+				],
+				"width": 0.0
+			},
+			"select_project":
+			{
+				"height": 0.0,
+				"selected_items":
+				[
+				],
+				"width": 0.0
+			},
+			"select_symbol":
+			{
+				"height": 0.0,
+				"selected_items":
+				[
+				],
+				"width": 0.0
+			},
+			"settings":
+			{
+			},
+			"show_minimap": true,
+			"show_open_files": false,
+			"show_tabs": true,
+			"side_bar_visible": true,
+			"side_bar_width": 150.0,
+			"status_bar_visible": true,
+			"template_settings":
+			{
+			},
+			"window_id": 20,
 			"workspace_name": ""
 		}
 	],
