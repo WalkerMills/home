@@ -104,6 +104,7 @@ alias grep='grep --color=auto --no-messages --binary-files=without-match'
 alias more='less'
 alias mkdir='mkdir --parents --verbose'
 alias find='find -O3'
+alias cpr='rsync --partial --progress --archive --checksum --compress --copy-unsafe-links'
 
 process () {
     count=`pgrep -c $@`
