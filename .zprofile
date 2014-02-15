@@ -5,7 +5,10 @@ then
         pulseaudio --start &
     fi
 
-    mpd
+    if [[ -z `process mpd` ]]
+    then
+        mpd
+    fi
     
 #    if [[ $XDG_VTNR -eq 1 ]]
 #    then
