@@ -98,12 +98,12 @@ mkbin:
 # Implicit rule to generate object files
 %.o: %.c mklib 
 	@# Everything is compiled with -fPIC so they can be dynamically linked
-	$(CC) $(ALL_CFLAGS) -fPIC -c $(srcdir)/$< -o $(libdir)/$@
+	$(CC) $(CFLAGS) -fPIC -c $(srcdir)/$< -o $(libdir)/$@
 
 # Implicit rule to generate object files
 %.o: %.cpp mklib 
 	@# Everything is compiled with -fPIC so they can be dynamically linked
-	$(CXX) $(ALL_CXXFLAGS) -fPIC -c $(srcdir)/$< -o $(libdir)/$@
+	$(CXX) $(CXXFLAGS) -fPIC -c $(srcdir)/$< -o $(libdir)/$@
 
 # Implicit rule matching the C/C++ dynamic library naming convention
 lib%.so: %.o
