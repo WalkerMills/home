@@ -1,11 +1,10 @@
 #include <iostream>
-#include <new>
 #include <cstdlib>
 #include <ctime>
 
 #include "sort.hh"
 
-#define SIZE 1024
+#define SIZE 100
 
 
 static unsigned *gen_array(unsigned size) {
@@ -19,19 +18,23 @@ static unsigned *gen_array(unsigned size) {
     return arr;
 }
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char **argv) {
     unsigned *arr = gen_array(SIZE);
     std::vector<unsigned> vec(arr, arr + SIZE);
 
-    sort::print<unsigned>(arr, SIZE);
-    sort::introsort<unsigned>(arr, SIZE);
-    sort::print<unsigned>(arr, SIZE);
+    sort::print(arr, arr + SIZE);
     std::cout << std::endl;
 
-    sort::print<std::vector, unsigned>(vec);
-    sort::introsort<std::vector, unsigned>(vec);
-    sort::print<std::vector, unsigned>(vec);
+    sort::introsort(arr, SIZE);
+    sort::print(arr, arr + SIZE);
+    std::cout << std::endl << std::endl;
+
+    sort::print(vec);
     std::cout << std::endl;
+
+    sort::introsort(vec);
+    sort::print(vec);
+    std::cout << std::endl << std::endl;
 
     return 0;
 }
