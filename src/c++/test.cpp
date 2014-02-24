@@ -1,15 +1,36 @@
 #include <iostream>
+#include <new>
+#include <cstdlib>
+#include <ctime>
 
 #include "sort.hh"
 
+#define SIZE 1024
+
+
+static unsigned *gen_array(unsigned size) {
+    unsigned *arr = new unsigned[size];
+    srand(time(NULL));
+
+    for ( unsigned i = 0; i < size; i++ ) {
+        arr[i] = rand() % (size * 10);
+    }
+
+    return arr;
+}
 
 int main(int argc, char const *argv[]) {
-    int input[10] = {1, 3, 4, 2, 5, 8, 9, 6, 0, 7};
-    quicksort(input, 0, 9);
+    unsigned *arr = gen_array(SIZE);
+    std::vector<unsigned> vec(arr, arr + SIZE);
 
-    for (int i = 0; i < 10; i++) {
-        std::cout << input[i] << " ";
-    }
+    sort::print<unsigned>(arr, SIZE);
+    sort::introsort<unsigned>(arr, SIZE);
+    sort::print<unsigned>(arr, SIZE);
+    std::cout << std::endl;
+
+    sort::print<std::vector, unsigned>(vec);
+    sort::introsort<std::vector, unsigned>(vec);
+    sort::print<std::vector, unsigned>(vec);
     std::cout << std::endl;
 
     return 0;
