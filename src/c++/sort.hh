@@ -1,8 +1,10 @@
 #ifndef __SORT_HH__
 #define __SORT_HH__
 
+#include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <sstream>
 #include <utility>
 #include <vector>
 #include <cmath>
@@ -36,20 +38,16 @@ public:
 
     // Increment to the next Leonardo number
     leonardo &operator++() throw() {
-        unsigned tmp = a;
+        std::swap(a, b);
+        a += b + 1;
         
-        a = a + b + 1;
-        b = tmp;
-
         return *this;
     }
 
     // Decrement to the previous Leonardo number
     leonardo &operator--() throw() {
-        unsigned tmp = b;
-        
-        b = a - b - 1;
-        a = tmp;
+        std::swap(a, b);
+        b -= a + 1;
 
         return *this;
     }
@@ -70,7 +68,7 @@ namespace sort {
     // Print the elements in the range [first, last) 
     template<typename T>
     void print(T first, T last) {
-        for ( T i = first; i != last; i++ ) {
+        for ( T i = first; i < last; ++i ) {
             std::cout << *i << ' ';
         }
         std::cout << std::endl;
@@ -79,24 +77,71 @@ namespace sort {
     // Print all the elements in a container
     template<typename T>
     void print(T input) {
-        print(input.begin(), input.end());
+        sort::print(input.begin(), input.end());
     }
 
+    template<typename T>
+    bool check(T start, T stop) {
+        for ( T i = start + 1; i < stop; ++i ) {
+            if ( *(i - 1) > *i ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template<typename T>
+    bool check(T input) {
+        return sort::check(input.begin(), input.end());
+    }
+
+    template<typename T>
+    bool show(T start, T stop) {
+        bool sorted = true;
+        std::stringstream ss;
+
+        for ( T i = start; i < stop; ++i ) {
+            if ( i < stop - 1 && *i > *(i + 1) ) {
+                sorted = false;
+
+                ss << "[ " << *i++ << ' ';
+
+                for ( ; i < stop - 1 && *i > *(i + 1); ++i ) {
+                    std::cerr << *i << ' ';
+                }
+
+                ss << *i << " ] ";
+            } else {
+                ss << *i << ' ';
+            }
+        }
+
+        if ( ! sorted ) {
+            std::cerr << ss.str() << std::endl;
+        }
+        return sorted;
+    }
+
+    template<typename T>
+    void show(T input) {
+        sort::show(input.begin(), input.end());
+    }
 
     // In-place insertion sort on the elements in the range [first, last)
     template<typename T>
     void insertion_sort(T start, T stop) {
         T min = start;
 
-        for ( T i = start + 1; i < stop; i++ ) {
+        for ( T i = start + 1; i < stop; ++i ) {
             if ( *min > *i ) {
                 min = i;
             }
         }
 
         std::iter_swap(start, min);
-        for ( T i = start + 1; i < stop; i++ ) {
-            for ( T j = i; j != start && *(j - 1) > *j; j-- ) {
+        for ( T i = start + 1; i < stop; ++i ) {
+            for ( T j = i; j != start && *(j - 1) > *j; --j ) {
                 std::iter_swap(j, j - 1);
             }
         }
@@ -105,7 +150,13 @@ namespace sort {
     // In-place insertion sort on all the elements in a container
     template<typename T>
     void insertion_sort(T &input) {
-        insertion_sort(input.begin(), input.end());
+        sort::insertion_sort(input.begin(), input.end());
+    }
+
+    // In-place insertion sort on all the elements in an array
+    template<typename T>
+    void insertion_sort(T *input, unsigned SIZE) {
+        sort::insertion_sort(input, input + SIZE);
     }
 
 
@@ -118,79 +169,99 @@ namespace sort {
     // In-place smoothsort on all the elements in a container
     template<typename T>
     void smoothsort(T &input) {
-        smoothsort(input.begin(), input.end());
+        sort::smoothsort(input.begin(), input.end());
     }
 
-
-    // Partitioning helper function for quicksort on an array
     template<typename T>
-    static T partition(T start, T stop, unsigned chunk) {
-        if ( stop > start ) {
-            T pivot;
+    static T medianOf3(T a, T b, T c) {
+        T maximum = std::max(std::max(a, b), c);
+        T minimum = std::min(std::min(a, b), c);
 
-            // Minimum chunk size is 1
-            if ( chunk == 0 ) {
-                chunk = 1;
-            }
+        return a ^ b ^ c ^ minimum ^ maximum;
+    }
 
+    template<typename T>
+    std::pair<T, T> partition(T start, T stop, unsigned chunk) {
+        int n = stop - start;
 
-            if ( stop > start + 1 ) {
-                // pivot is chosen to be the median of three elements around a
-                // random index inside the partition
-                srand(time(NULL));
-                pivot = start + (rand() % (stop - start - 1)) + 1;
-                insertion_sort(pivot - 1, pivot + 2);
-
-                while ( stop > start + chunk ) {
-                    while ( *start < *pivot ) {
-                        start++;
-                    }
-
-                    while ( *stop > *pivot ) {
-                        stop--;
-                    }
-
-                    if ( *start == *stop ) {
-                        start++;
-                    } else if ( *stop > *start ) {
-                        std::iter_swap(start, stop);
-                    }
-                }
-            } else if ( *start > *stop ) {
-                std::iter_swap(start, stop);
-            }
+        if ( n <= chunk ) {
+            insertion_sort(start, stop);
+            return std::make_pair(start, stop);
+        } else if ( stop - start <= 40 ) {
+            auto median = medianOf3(*start, *(start + n / 2), *(stop - 1));
+            std::swap(*start, median);
+        } else {
+            int part = n / 8;
+            T mid = start + n / 2;
+            auto median0 = medianOf3(*start, *(start + part), 
+                                     *(start + part + part));
+            auto median1 = medianOf3(*(mid - part), *mid, *(mid + part));
+            auto median2 = medianOf3(*(stop - 1 - part - part), 
+                                     *(stop - 1 - part), *(stop - 1));
+            auto ninther = medianOf3(median0, median1, median2);
+            std::swap(*start, ninther);
         }
 
-        return stop;
+        T i = start, p = start;
+        T j = stop, q = stop;
+        auto pivot = *start;
+
+        while ( true ) {
+            while ( *++i < pivot ) {
+                if ( i == stop - 1 ) break;
+            }
+
+            while ( pivot < *--j ) {
+                if ( j == start ) break;
+            }
+
+            if ( i == j && *i == pivot ) std::iter_swap(i, ++p);
+            if ( i >= j ) break;
+
+            std::iter_swap(i, j);
+
+            if ( *i == pivot ) std::iter_swap(i, ++p);
+            if ( *j == pivot ) std::iter_swap(j, --q);
+        }
+
+        i = j + 1;
+        for ( T k = start; k <= p; ++k ) std::iter_swap(k, j--);
+        for ( T k = stop - 1; k >= q; --k ) std::iter_swap(k, i++);
+
+        return std::make_pair(j + 1, i);
     }
 
-
-    // In-place quicksort on the elements in the range [start, stop)
     template<typename T>
     void quicksort(T start, T stop) {
         if (start < stop) {
-            T pivot = partition(start, stop, 0);
-            quicksort(start, pivot);
-            quicksort(pivot + 1, stop);
+            std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
+            sort::quicksort(start, indices.first);
+            sort::quicksort(indices.second, stop);
         }
     }
 
     // In-place quicksort on the input container
     template<typename T>
     void quicksort(T &input) {
-        quicksort(input.begin(), input.end());
+        sort::quicksort(input.begin(), input.end());
+    }
+
+    // In-place quicksort on the input array
+    template<typename T>
+    void quicksort(T *input, unsigned size) {
+        sort::quicksort(input, input + size);
     }
 
     // In-place introsort on the elements in the range [start, stop)
     template<typename T>
     void introsort(T start, T stop, unsigned depth) {
-        while ( stop > start + CHUNK ) {
+        if ( start < stop ) {
             if ( depth > 0 ) {
-                T pivot = partition(start, stop, CHUNK);
-                introsort(pivot + 1, stop, depth - 1);
-                stop = pivot + 1;
+                std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
+                sort::introsort(start, indices.first, depth - 2);
+                sort::introsort(indices.second, stop, depth - 2);
             } else {
-                smoothsort(start, stop);
+                sort::smoothsort(start, stop);
                 return;
             }
         }
@@ -201,8 +272,8 @@ namespace sort {
     void introsort(T &input) {
         unsigned max = 2 * log2(input.size()) + 1;
 
-        introsort(input.begin(), input.end(), max);
-        insertion_sort(input);
+        sort::introsort(input.begin(), input.end(), max);
+        sort::insertion_sort(input);
     }
 
     // In-place introsort on the input array
@@ -210,8 +281,8 @@ namespace sort {
     void introsort(T *input, unsigned size) {
         unsigned max = 2 * log2(size) + 1;
 
-        introsort(input, input + size, max);
-        insertion_sort(input, input + size);
+        sort::introsort(input, input + size, max);
+        sort::insertion_sort(input, input + size);
     }
 
 }
