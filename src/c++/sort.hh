@@ -5,8 +5,8 @@
 #include <iterator>
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include <utility>
-#include <vector>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
@@ -159,7 +159,6 @@ namespace sort {
         sort::insertion_sort(input, input + SIZE);
     }
 
-
     // In-place smoothsort on the elements in the range [start, stop)
     template<typename T>
     void smoothsort(T start, T stop) {
@@ -233,11 +232,24 @@ namespace sort {
 
     template<typename T>
     void quicksort(T start, T stop) {
-        if (start < stop) {
-            std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
-            sort::quicksort(start, indices.first);
-            sort::quicksort(indices.second, stop);
+        std::stack<std::pair<T, T>> *st = new std::stack<std::pair<T, T>>();
+
+        st->push(std::make_pair(start, start));
+
+        while ( ! st->empty() ) {
+            while ( start < stop ) {
+                std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
+                st->push(std::make_pair(indices.second, stop));
+                stop = indices.first;
+            }
+
+            std::pair<T, T> indices = st->top();
+            st->pop();
+            start = indices.first;
+            stop = indices.second;
         }
+
+        delete st;
     }
 
     // In-place quicksort on the input container
@@ -255,16 +267,31 @@ namespace sort {
     // In-place introsort on the elements in the range [start, stop)
     template<typename T>
     void introsort(T start, T stop, unsigned depth) {
-        if ( start < stop ) {
-            if ( depth > 0 ) {
-                std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
-                sort::introsort(start, indices.first, depth - 2);
-                sort::introsort(indices.second, stop, depth - 2);
-            } else {
-                sort::smoothsort(start, stop);
-                return;
+        std::stack<std::pair<T, T>> *st = new std::stack<std::pair<T, T>>();
+
+        st->push(std::make_pair(start, start));
+
+        while ( ! st->empty() ) {
+            while ( start < stop ) {
+                if ( depth > 0 ) {
+                    std::pair<T, T> indices = 
+                        sort::partition(start, stop, CHUNK);
+                    st->push(std::make_pair(indices.second, stop));
+                    stop = indices.first;
+                    --depth;
+                } else {
+                    sort::smoothsort(start, stop);
+                    break;
+                }
             }
+
+            std::pair<T, T> indices = st->top();
+            st->pop();
+            start = indices.first;
+            stop = indices.second;
         }
+
+        delete st;
     }
 
     // In-place introsort on the input container
@@ -273,7 +300,6 @@ namespace sort {
         unsigned max = 2 * log2(input.size()) + 1;
 
         sort::introsort(input.begin(), input.end(), max);
-        sort::insertion_sort(input);
     }
 
     // In-place introsort on the input array
@@ -282,7 +308,6 @@ namespace sort {
         unsigned max = 2 * log2(size) + 1;
 
         sort::introsort(input, input + size, max);
-        sort::insertion_sort(input, input + size);
     }
 
 }
