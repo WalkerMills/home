@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         &sort::introsort<std::vector<unsigned>>
     };
 
-    for ( unsigned i = 1; i < 4; ++i ) {
+    for ( unsigned i = 0; i < 4; ++i ) {
         switch ( i ) {
             case 0:
                 std::cout << "Insertion sort:" << std::endl;

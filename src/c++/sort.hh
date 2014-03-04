@@ -183,7 +183,7 @@ namespace sort {
         unsigned child_size;
 
         // Store original value
-        auto val = *root;
+        auto value = *root;
 
         // We are in a leaf of the tree, so return
         if ( size < 2 ) return;
@@ -207,7 +207,7 @@ namespace sort {
 
             // If both of the children's roots are less than the original
             // value, then root is at the correct position
-            if ( *next <= val ) break;
+            if ( *next <= value ) break;
 
             // Push the larger root up the tree by chain swapping
             *root = *next;
@@ -218,7 +218,7 @@ namespace sort {
         } while ( size > 1 );
 
         // Put the original value in the correct position
-        *root = val;
+        *root = value;
     }
 
     // Rebalance and sort the roots of the heaps in the tree at the given root 
@@ -227,12 +227,11 @@ namespace sort {
         T left, right, next;
 
         // Store original value
-        auto val = *root;
+        auto value = *root;
 
         // Traverse the implicit list of heaps from right to left
         while ( size.mask != 1 ) {
-
-            auto max = val;
+            auto max = value;
 
             // If this heap contains any subheaps
             if ( size.offset > 1 ) {
@@ -241,7 +240,7 @@ namespace sort {
                 // Find left child
                 left = right - sort::leonardo_numbers[size.offset - 2];
 
-                // Use the maximum of *left, *right, and val for any
+                // Use the maximum of *left, *right, and value for any
                 // comparisons
                 if ( max < *left ) max = *left;
                 if ( max < *right ) max = *right;
@@ -253,7 +252,7 @@ namespace sort {
             // If it's already in order, stop
             if ( *next <= max ) break;
 
-            // Push the larger root up the tree
+            // Push the larger root up the tree by chain swapping
             *root = *next;
 
             // Move down the tree
@@ -266,8 +265,8 @@ namespace sort {
             } while ( ! (size.mask & 1) );
         }
 
-        // Put the original value in the correct position by chain swapping
-        *root = val;
+        // Put the original value in the correct position
+        *root = value;
 
         // Make sure that the heap we stopped at is ordered properly
         sort::sift(root, size.offset);
@@ -382,19 +381,47 @@ namespace sort {
     // In-place insertion sort on the elements in the range [first, last)
     template<typename T>
     void insertion_sort(T start, T stop) {
-        T min = start;
+        T left, right, center;
+        unsigned step;
 
         for ( T i = start + 1; i < stop; ++i ) {
-            if ( *min > *i ) {
-                min = i;
-            }
-        }
+            auto value = *i;
+            left = start;
+            right = i;
+            step = 1;
 
-        std::iter_swap(start, min);
-        for ( T i = start + 1; i < stop; ++i ) {
-            for ( T j = i; j != start && *(j - 1) > *j; --j ) {
-                std::iter_swap(j, j - 1);
+            // Assuming that the elements in the range [start, i) are sorted,
+            // find the correct insertion point
+            do {
+                // Start near i and take increasingly large steps
+                center = right - step;
+                step <<= 1;
+
+                if ( value < *center ) {
+                    right = center;
+                } else {
+                    left = center + 1;
+                }
+            } while ( left + step <= right );
+
+            // Perform a binary search
+            while ( left < right ) {
+                center = left + (right - left) / 2;
+
+                if ( value < *center ) {
+                    right = center;
+                } else {
+                    left = center + 1;
+                }
             }
+
+            // Chain swap elements into place
+            T j = i;
+            for ( ; j > left; --j ) {
+                *j = *(j - 1);
+            }
+            // Put the original value in the correct position
+            *j = value;
         }
     }
 
