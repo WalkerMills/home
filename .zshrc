@@ -122,6 +122,8 @@ alias reboot='systemctl reboot'
 alias poweroff='systemctl poweroff'
 alias suspend='systemctl suspend'
 
+# Torrents
+alias torstart='mv ~/downloads/{*.torrent,torrents}'
 
 # Shell functions
 mirrors() {
@@ -166,3 +168,4 @@ pkgcache() {
         fi
     done
 }
+

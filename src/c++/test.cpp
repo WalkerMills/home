@@ -1,4 +1,5 @@
 #include <chrono>
+#include <iostream>
 #include <cstdlib>
 #include <ctime>
 
@@ -53,7 +54,7 @@ int main(int argc, char **argv) {
                 std::cout << "Insertion sort:" << std::endl;
                 start = std::chrono::high_resolution_clock::now();
                 // sort::insertion_sort(vectors[i]);
-                sort::insertion_sort(arrays[i], SIZE);
+                sort::insertion_sort<unsigned>(arrays[i], SIZE);
                 end = std::chrono::high_resolution_clock::now();
                 break;
 
@@ -81,7 +82,9 @@ int main(int argc, char **argv) {
                   << ((float) SIZE) / elapsed.count() 
                   << " elements per microsecond" << std::endl;
 
-        sort::show(arrays[i], arrays[i] + SIZE);
+        if ( ! sort::check(arrays[i], arrays[i] + SIZE) ) {
+            std::cerr << "Warning: input is not sorted" << std::endl;
+        }
    
         std::cout << std::endl;
     }
