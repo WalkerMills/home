@@ -1,0 +1,10 @@
+include "/home/walker/.themes/Xfce-dusk-gtk3/gtk-2.0/gtkrc"
+
+gtk-icon-theme-name = "AwOkenWhite"
+
+style "schrift"
+{
+font_name = "Terminus 8"
+}
+widget_class "*" style "schrift"
+gtk-font-name = "Terminus 8"

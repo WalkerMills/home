@@ -1,0 +1,3 @@
+post_install() {
+    echo "You have to source /etc/profile or log out to add NuoDB to your path"
+}
