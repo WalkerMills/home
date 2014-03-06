@@ -1,0 +1,31 @@
+# Maintainer: Walker Mills <walker dot mills7 at gmail dot com>
+pkgname='nuodb'
+pkgver='2.0.2'
+pkgrel=1
+pkgdesc='Distributed database system for cloud computing'
+arch=('x86_64')
+url='http://www.nuodb.com/'
+license=('custom')
+depends=('java-environment' 'lib32-glibc' 'unixodbc' 'util-linux')
+source=($pkgname-$pkgver.linux.x64.tar.gz
+        $pkgname.conf
+        $pkgname.install
+        $pkgname.sh
+        license.txt)
+sha512sums=('035674dbd317f9e3e3a83ca1df43deebdabc6509e95d9c314c2f8ea6d7c2300a0e67db569a6a8e14fa86a77e7a5487761737ab2c12c11b514fe5792c03469183'
+            '39c3135ecbf5dff5371040daa1863794fdbbb3d2c32a8253947bce989dee63720af9ea1f69a6fa813e660c363fe13a7bbe0e33ea83bac483f77eac3af0a4dea5'
+            '7b3fc8c5d59f697ce60152d91a0634ae1d363f19e1c6c0849930520f72fc9bbd3b36fb4cb52d689d49b26482eb4705e2e7d4f1a3028cc14df112760c31db26a2'
+            '73195c9c8326b426f602743f61e08c4505fd9ba087f3ad27eac02e722ae1b1c9dabd89b2f9c88f644e1e552d6512e46e47cdf245dac538d6d9eb5463fbef5db5'
+            '48b1e4daadecf4e7ed833878af8d9b38db93a68e6dec02b1c44698153bda7d2f8bdfb60d7993d301b9143ef7acbf3741735213eff1e9b7c0d4daf3b82423c32b')
+
+package() {
+    cd "$pkgdir"
+    install -Dm755 "$srcdir/$pkgname.sh" etc/profile.d/$pkgname.sh
+    install -Dm644 "$srcdir/$pkgname.conf" etc/ld.so.conf.d/$pkgname.conf
+    mkdir -p opt
+    rsync -azc "$srcdir/$pkgname-$pkgver.19.linux.$arch/" opt/$pkgname
+    mkdir -p usr/include
+    rsync -azc "$srcdir/$pkgname-$pkgver.19.linux.$arch/include/" usr/include/$pkgname
+    install -Dm644 "$srcdir/license.txt" usr/share/licenses/$pkgname/LICENSE
+}
+
