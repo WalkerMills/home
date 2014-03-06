@@ -42,104 +42,59 @@ unsigned **gen_arrays(unsigned samples, unsigned size) {
     return arrays;
 }
 
-void benchmark_array(unsigned samples, unsigned size, array_fp f) {
-    unsigned **arrays = gen_arrays(samples, size);
-    std::chrono::microseconds elapsed = std::chrono::microseconds::zero();
-    std::chrono::high_resolution_clock::time_point start, end;
-
-    for ( unsigned i = 0; i < samples; ++i ) {
-        start = std::chrono::high_resolution_clock::now();
-        f(arrays[i], size);
-        end = std::chrono::high_resolution_clock::now();
-        elapsed += 
-            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    }
-
-    std::cout << elapsed.count() << " microseconds to sort " << samples 
-              << " arrays of " << size << " elements; " 
-              << ((float)(samples * size)) / elapsed.count()
-              << " elements per microsecond" << std::endl;
-
-    for ( unsigned i = 0; i < samples; ++i ) {
-        if ( ! sort::check(arrays[i], arrays[i] + size) ) {
-            std::cerr << "Warning: sample " << i + 1 << " is not sorted"
-                      << std::endl;
-        }
-    }
-
-    delete [] arrays;
-}
-
-void benchmark_vector(unsigned samples, unsigned size, vector_fp f) {
-    std::vector<unsigned> *vectors = gen_vectors(samples, size);
-    std::chrono::microseconds elapsed = std::chrono::microseconds::zero();
-    std::chrono::high_resolution_clock::time_point start, end;
-
-    for ( unsigned i = 0; i < samples; ++i ) {
-        start = std::chrono::high_resolution_clock::now();
-        f(vectors[i]);
-        end = std::chrono::high_resolution_clock::now();
-        elapsed += 
-            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    }
-
-    std::cout << elapsed.count() << " microseconds to sort " << samples 
-              << " vectors of " << size << " elements; " 
-              << ((float)(samples * size)) / elapsed.count()
-              << " elements per microsecond" << std::endl;
-
-    for ( unsigned i = 0; i < samples; ++i ) {
-        if ( ! sort::check(vectors[i]) ) {
-            std::cerr << "Warning: sample " << i + 1 << " is not sorted"
-                      << std::endl;
-        }
-    }
-
-    delete [] vectors;
-}
-
 int main(int argc, char **argv) {
-    array_fp const array_sorts[] = {
-        &sort::insertion_sort<unsigned>,
-        &sort::quicksort<unsigned>,
-        &sort::smoothsort<unsigned>,
-        &sort::introsort<unsigned>
-    };
-    vector_fp const vector_sorts[] = {
-        &sort::insertion_sort<std::vector<unsigned>>,
-        &sort::quicksort<std::vector<unsigned>>,
-        &sort::smoothsort<std::vector<unsigned>>,
-        &sort::introsort<std::vector<unsigned>>
+    std::vector<array_fp> const array_sorts = {
+        &std::sort<unsigned *>,
+        &std::stable_sort<unsigned *>,
+        &sort::insertion_sort<unsigned *>,
+        &sort::quicksort<unsigned *>,
+        &sort::smoothsort<unsigned *>,
+        &sort::introsort<unsigned *>,
+        &sort::parallel_introsort<unsigned *>
     };
 
-    for ( unsigned i = 0; i < 4; ++i ) {
+    unsigned i = 0;
+
+    for ( auto &fp : array_sorts ) {
         switch ( i ) {
             case 0:
-                std::cout << "Insertion sort:" << std::endl;
+                std::cout << "STL sort:" << std::endl;
                 break;
 
             case 1:
-                std::cout << "Quicksort:" << std::endl;
+                std::cout << "STL stable sort:" << std::endl;
                 break;
 
             case 2:
-                std::cout << "Smoothsort:" << std::endl;
+                std::cout << "Insertion sort:" << std::endl;
                 break;
 
             case 3:
+                std::cout << "Quicksort:" << std::endl;
+                break;
+
+            case 4:
+                std::cout << "Smoothsort:" << std::endl;
+                break;
+
+            case 5:
                 std::cout << "Introsort:" << std::endl;
+                break;
+
+            case 6:
+                std::cout << "Parallelized introsort:" << std::endl;
                 break;
 
             default:
                 break;
         }
-        std::cout << "Arrays: ";
-        benchmark_array(SAMPLES, SIZE, array_sorts[i]);
-        std::cout << "Vectors: ";
-        benchmark_vector(SAMPLES, SIZE, vector_sorts[i]);
-        std::cout << std::endl;
+        ++i;
+
+        std::pair<double, double> res = benchmark<unsigned>(SAMPLES, SIZE, fp);
+        std::cout << res.first << " elements per microsecond, standard "
+                     "deviation of " << res.second 
+                  << " (" << res.second / res.first * 100 << "%)" 
+                  << std::endl << std::endl;
     }
 
     return 0;

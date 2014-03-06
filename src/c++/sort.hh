@@ -6,10 +6,14 @@
 #include <iostream>
 #include <sstream>
 #include <stack>
+#include <thread>
 #include <utility>
+#include <vector>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+
+#include "Timsort.hh"
 
 // Number of elements that trigger insertion sort from quicksort by default
 #define CHUNK 16
@@ -171,8 +175,8 @@ namespace sort {
     // with brackets around runs in reverse sorted order, and  return false.
     // Otherwise, return true.
     template<typename T>
-    void show(T input) {
-        sort::show(input.begin(), input.end());
+    bool show(T input) {
+        return sort::show(input.begin(), input.end());
     }
 
 
@@ -440,7 +444,7 @@ namespace sort {
 
     // Calculate the median of three values
     template<typename T>
-    static T medianOf3(T a, T b, T c) {
+    T medianOf3(T a, T b, T c) {
         // Find the maximum of all three elements
         T maximum = std::max(std::max(a, b), c);
 
@@ -584,7 +588,8 @@ namespace sort {
     }
 
 
-    // In-place introsort on the elements in the range [start, stop)
+    // In-place introsort on the elements in the range [start, stop) with
+    // parametrized depth 
     template<typename T>
     void introsort(T start, T stop, unsigned depth) {
         // Make a stack for holding pairs of iterators representing the
@@ -596,24 +601,24 @@ namespace sort {
 
         while ( ! st->empty() ) {
             while ( start < stop ) {
-                if ( --depth > 0 ) {
-                    // Partition the given range using the default chunk size
-                    std::pair<T, T> indices = 
-                        sort::partition(start, stop, CHUNK);
-
-                    // Push the range which includes elements larger than the
-                    // pivot onto the stack
-                    st->push(std::make_pair(indices.second, stop));
-
-                    // Set the end of the range to be the end of the range
-                    // which includes elements smaller than the pivot
-                    stop = indices.first;
-                } else {
+                if ( --depth < 0 ) {
                     // If we've exceeded the maximum depth, smoothsort the
                     // remaining elements
                     sort::smoothsort(start, stop);
                     break;
                 }
+
+                // Partition the given range using the default chunk size
+                std::pair<T, T> indices = 
+                    sort::partition(start, stop, CHUNK);
+
+                // Push the range which includes elements larger than the
+                // pivot onto the stack
+                st->push(std::make_pair(indices.second, stop));
+
+                // Set the end of the range to be the end of the range
+                // which includes elements smaller than the pivot
+                stop = indices.first;
             }
 
             // Retrieve the next range from the stack
@@ -628,11 +633,20 @@ namespace sort {
         delete st;
     }
 
+    // In-place introsort on the elements in the range [start, stop)
+    template<typename T>
+    void introsort(T start, T stop) {
+        // Set a default maximum recursion depth of 1.5 * log(n)
+        unsigned max = 1.5 * log2(stop - start) + 1;
+
+        sort::introsort(start, stop, max);
+    }
+
     // In-place introsort on the input container
     template<typename T>
     void introsort(T &input) {
         // Set a default maximum recursion depth of 2 * log(n)
-        unsigned max = 2 * log2(input.size()) + 1;
+        unsigned max = 1.5 * log2(input.size()) + 1;
 
         sort::introsort(input.begin(), input.end(), max);
     }
@@ -640,10 +654,40 @@ namespace sort {
     // In-place introsort on the first n elements of the input array
     template<typename T>
     void introsort(T *input, unsigned n) {
-        // Set a default maximum recursion depth of 2 * log(n)
-        unsigned max = 2 * log2(n) + 1;
+        // Set a default maximum recursion depth of 1.5 * log(n)
+        unsigned max = 1.5 * log2(n) + 1;
 
         sort::introsort(input, input + n, max);
+    }
+
+    template<typename T>
+    void parallel_introsort(T start, T stop, unsigned depth) {
+        std::vector<std::thread> threads(12);
+        unsigned part = (stop - start) / 12;
+
+        for ( unsigned i = 0; i < 11; ++i ) {
+            threads[i] = std::thread([start, i, part, depth](){
+                sort::introsort(start + i * part, start + (i + 1) * part, 
+                                depth);
+            });
+        }
+        threads[11] = std::thread([start, part, stop, depth](){
+            sort::introsort(start + 11 * part, stop, depth); 
+        });
+        for ( auto &thread : threads ) {
+            thread.join();
+        }
+
+        gfx::timsort(start, stop);
+    }
+
+    // In-place (parallel) introsort on the elements in the range [start, stop)
+    template<typename T>
+    void parallel_introsort(T start, T stop) {
+        // Set a default maximum recursion depth of 1.5 * log(n)
+        unsigned max = 1.5 * log2(stop - start) + 1;
+
+        sort::parallel_introsort(start, stop, max);
     }
 }
 
