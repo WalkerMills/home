@@ -18,6 +18,9 @@
 // Number of elements that trigger insertion sort from quicksort by default
 #define CHUNK 16
 
+// Number of threads to use for multithreading quicksort
+#define THREADS 8
+
 // Type large enough to contain any Leonardo number
 typedef unsigned long leonardo_t;
 
@@ -661,21 +664,23 @@ namespace sort {
     }
 
     template<typename T>
-    void parallel_introsort(T start, T stop, unsigned depth) {
-        std::vector<std::thread> threads(12);
-        unsigned part = (stop - start) / 12;
+    void parallel_introsort(T start, T stop, unsigned depth, 
+                            unsigned nthread) {
+        std::thread *threads = new std::thread[nthread];
+        unsigned part = (stop - start) / nthread;
 
-        for ( unsigned i = 0; i < 11; ++i ) {
-            threads[i] = std::thread([start, i, part, depth](){
+        for ( unsigned i = 0; i < nthread - 1; ++i ) {
+            threads[i] = std::thread([start, i, part, depth] () {
                 sort::introsort(start + i * part, start + (i + 1) * part, 
                                 depth);
             });
         }
-        threads[11] = std::thread([start, part, stop, depth](){
-            sort::introsort(start + 11 * part, stop, depth); 
+        threads[nthread - 1] = std::thread(
+            [start, nthread, part, stop, depth] () {
+                sort::introsort(start + (nthread - 1) * part, stop, depth); 
         });
-        for ( auto &thread : threads ) {
-            thread.join();
+        for ( std::thread *t = threads; t < threads + nthread; ++t ) {
+            t->join();
         }
 
         gfx::timsort(start, stop);
@@ -687,7 +692,7 @@ namespace sort {
         // Set a default maximum recursion depth of 1.5 * log(n)
         unsigned max = 1.5 * log2(stop - start) + 1;
 
-        sort::parallel_introsort(start, stop, max);
+        sort::parallel_introsort(start, stop, max, THREADS);
     }
 }
 

@@ -46,9 +46,9 @@ int main(int argc, char **argv) {
     std::vector<array_fp> const array_sorts = {
         &std::sort<unsigned *>,
         &std::stable_sort<unsigned *>,
-        &sort::insertion_sort<unsigned *>,
-        &sort::quicksort<unsigned *>,
-        &sort::smoothsort<unsigned *>,
+        // &sort::insertion_sort<unsigned *>,
+        // &sort::quicksort<unsigned *>,
+        // &sort::smoothsort<unsigned *>,
         &sort::introsort<unsigned *>,
         &sort::parallel_introsort<unsigned *>
     };
@@ -66,16 +66,19 @@ int main(int argc, char **argv) {
                 break;
 
             case 2:
-                std::cout << "Insertion sort:" << std::endl;
-                break;
+                // std::cout << "Insertion sort:" << std::endl;
+                // break;
+                ++i;
 
             case 3:
-                std::cout << "Quicksort:" << std::endl;
-                break;
+                // std::cout << "Quicksort:" << std::endl;
+                // break;
+                ++i;
 
             case 4:
-                std::cout << "Smoothsort:" << std::endl;
-                break;
+                // std::cout << "Smoothsort:" << std::endl;
+                // break;
+                ++i;
 
             case 5:
                 std::cout << "Introsort:" << std::endl;
