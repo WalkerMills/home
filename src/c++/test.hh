@@ -10,7 +10,7 @@
 #include "sort.hh"
 
 #define SAMPLES 100
-#define SIZE 100000
+#define SIZE 1000000
 
 
 typedef void (*array_fp)(unsigned *start, unsigned *stop);

@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         &std::sort<unsigned *>,
         &std::stable_sort<unsigned *>,
         // &sort::insertion_sort<unsigned *>,
-        // &sort::quicksort<unsigned *>,
+        &sort::quicksort<unsigned *>,
         // &sort::smoothsort<unsigned *>,
         &sort::introsort<unsigned *>,
         &sort::parallel_introsort<unsigned *>
@@ -71,9 +71,9 @@ int main(int argc, char **argv) {
                 ++i;
 
             case 3:
-                // std::cout << "Quicksort:" << std::endl;
-                // break;
-                ++i;
+                std::cout << "Quicksort:" << std::endl;
+                break;
+                // ++i;
 
             case 4:
                 // std::cout << "Smoothsort:" << std::endl;
@@ -96,7 +96,8 @@ int main(int argc, char **argv) {
         std::pair<double, double> res = benchmark<unsigned>(SAMPLES, SIZE, fp);
         std::cout << res.first << " elements per microsecond, standard "
                      "deviation of " << res.second 
-                  << " (" << res.second / res.first * 100 << "%)" 
+                  << " (" << res.second / res.first * 100 << "%) for "
+                  << SAMPLES << " samples of " << SIZE << " elements"
                   << std::endl << std::endl;
     }
 

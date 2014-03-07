@@ -4,22 +4,26 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <list>
 #include <sstream>
 #include <stack>
 #include <thread>
 #include <utility>
-#include <vector>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 
 #include "Timsort.hh"
 
+// The maximum size of an array which will choose the median as the pivot
+// for partitioning
+#define SMALL 40 
+
 // Number of elements that trigger insertion sort from quicksort by default
 #define CHUNK 16
 
 // Number of threads to use for multithreading quicksort
-#define THREADS 8
+#define THREADS 3
 
 // Type large enough to contain any Leonardo number
 typedef unsigned long leonardo_t;
@@ -281,7 +285,7 @@ namespace sort {
 
     // Heapify the elements in the range [start, stop)
     template<typename T>
-    heapsize_t heapify(T start, T stop) {
+    inline heapsize_t heapify(T start, T stop) {
         heapsize_t size;
 
         // Indicates whether a heap will need to be fused later
@@ -319,10 +323,10 @@ namespace sort {
 
             if ( fuse ) {
                 // If it needs to be fused eventually, we can just do a sift
-                sift(i, size.offset);
+                sort::sift(i, size.offset);
             } else {
                 // Otherwise, it is a final heap, so we need to do a trinkle
-                trinkle(i, size);
+                sort::trinkle(i, size);
             }
         }
 
@@ -331,7 +335,7 @@ namespace sort {
 
     // Extract all elements from the (heapified) range [start, stop)
     template<typename T>
-    void extract(T start, T stop, heapsize_t size) {
+    inline void extract(T start, T stop, heapsize_t size) {
         // Extract all elements except for the last two
         for ( T i = stop - 1; i > start + 1; --i ) {
             // If the last heap only has one element, ignore it
@@ -346,12 +350,13 @@ namespace sort {
 
                 // Add the left child and make sure its roots are sorted
                 size.mask = (size.mask << 1) | 1;
-                trinkle(i - leonardo_numbers[--size.offset - 1] - 1, size);
+                sort::trinkle(i - leonardo_numbers[--size.offset - 1] - 1,
+                              size);
 
                 // Add the right child and make sure its roots are sorted
                 size.mask = (size.mask << 1) | 1;
                 --size.offset;
-                trinkle(i - 1, size);
+                sort::trinkle(i - 1, size);
             }
         }
     }
@@ -447,7 +452,7 @@ namespace sort {
 
     // Calculate the median of three values
     template<typename T>
-    T medianOf3(T a, T b, T c) {
+    inline T medianOf3(T a, T b, T c) {
         // Find the maximum of all three elements
         T maximum = std::max(std::max(a, b), c);
 
@@ -458,60 +463,59 @@ namespace sort {
         return a ^ b ^ c ^ minimum ^ maximum;
     }
 
-
-    // Quicksort partitioning function
+    // Calculate Tukey's ninther of nine values
     template<typename T>
-    std::pair<T, T> partition(T start, T stop, unsigned chunk) {
-        int n = stop - start;
+    inline T ninther(T a, T b, T c, T d, T e, T f, T g, T h, T i) {
+        T med0 = sort::medianOf3(a, b, c);
+        T med1 = sort::medianOf3(d, e, f);
+        T med2 = sort::medianOf3(g, h, i);
 
-        if ( n <= chunk ) {
-            // Perform insertion sort on any chunk smaller than the given
-            // cutoff
-            sort::insertion_sort(start, stop);
-            return std::make_pair(start, stop);
-        } else if ( stop - start <= 40 ) {
+        return sort::medianOf3(med0, med1, med2);
+    }
+
+    // Places pivot at the beginning of the range [start, stop)
+    template<typename T>
+    inline void place_pivot(T start, T stop) {
+        unsigned n = stop - start;
+        auto pivot = *start;
+
+        if ( n <= SMALL ) {
             // Find the median of the first, middle, and last elements of
             // small ranges
-            auto median = sort::medianOf3(*start, *(start + n / 2), 
-                                          *(stop - 1));
-
-            // Swap it to the beginning of the range
-            std::swap(*start, median);
+            pivot = sort::medianOf3(*start, *(start + n / 2), *(stop - 1));
         } else {
-            // Compute Tukey's ninther
             int part = n / 8;
             T mid = start + n / 2;
-            auto median0 = sort::medianOf3(*start, *(start + part), 
-                                           *(start + part + part));
-            auto median1 = sort::medianOf3(*(mid - part), *mid, *(mid + part));
-            auto median2 = sort::medianOf3(*(stop - 1 - part - part), 
-                                           *(stop - 1 - part), *(stop - 1));
-            auto ninther = sort::medianOf3(median0, median1, median2);
 
-            // Swap it to the beginning of the range
-            std::swap(*start, ninther);
+            // Compute Tukey's ninther
+            pivot = sort::ninther(
+                *start, *(start + part), *(start + part + part), 
+                *(mid - part), *mid, *(mid + part), 
+                *(stop - 1 - part - part), *(stop - 1 - part), *(stop - 1));
         }
+
+        // Swap it to the beginning of the range
+        std::swap(*start, pivot);
+
+    }
+
+    template<typename T>
+    inline std::pair<T, T> ungarded_partition(T start, T stop){
+        sort::place_pivot(start, stop);
 
         // Bentley-McIlroy three-way partitioning
         T i = start, p = start;
         T j = stop, q = stop;
 
-        // Pivot is either median or Tukey's ninther
-        auto pivot = *start;
-
         while ( true ) {
             // Increment i while its value is less than the pivot
-            while ( *++i < pivot ) {
-                if ( i == stop - 1 ) break;
-            }
+            while ( *++i < *start )
 
             // Decrement j while its value is greater than the pivot
-            while ( pivot < *--j ) {
-                if ( j == start ) break;
-            }
+            while ( *start < *--j )
 
             // i and j have crossed
-            if ( i == j && *i == pivot ) std::iter_swap(i, ++p);
+            if ( i == j && *i == *start ) std::iter_swap(i, ++p);
 
             // i has passed j
             if ( i >= j ) break;
@@ -520,18 +524,38 @@ namespace sort {
             std::iter_swap(i, j);
 
             // Move pivot values to the ends of the range
-            if ( *i == pivot ) std::iter_swap(i, ++p);
-            if ( *j == pivot ) std::iter_swap(j, --q);
+            if ( *i == *start ) std::iter_swap(i, ++p);
+            if ( *j == *start ) std::iter_swap(j, --q);
         }
 
         // Swap pivot values into place in the array such that all preceding
         // elements are smaller, and all following elements are larger
         i = j + 1;
+
         for ( T k = start; k <= p; ++k ) std::iter_swap(k, j--);
         for ( T k = stop - 1; k >= q; --k ) std::iter_swap(k, i++);
 
         // Return the (inclusive) indices of the range that has been sorted
         return std::make_pair(j + 1, i);
+    }
+
+    // Quicksort partitioning function
+    template<typename T>
+    inline std::pair<T, T> partition(T start, T stop, unsigned chunk) {
+        int n = stop - start;
+
+        if ( n <= 1 ) {
+            return std::make_pair(start, stop);
+        } else if ( n == 2 ) {
+            if ( *start > *stop ) std::iter_swap(start, stop);
+            return std::make_pair(start, stop);
+        } else if ( n <= chunk ) {
+            // Perform insertion sort on any chunk smaller than the given
+            // cutoff
+            sort::insertion_sort(start, stop);
+            return std::make_pair(start, stop);
+        }
+        return ungarded_partition(start, stop);
     }
 
 
@@ -549,14 +573,14 @@ namespace sort {
         while ( ! st->empty() ) {
             while ( start < stop ) {
                 // Partition the given range using the default chunk size
-                std::pair<T, T> indices = sort::partition(start, stop, chunk);
+                std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
 
                 // Push the range which includes elements larger than the
                 // pivot onto the stack
                 st->push(std::make_pair(indices.second, stop));
 
-                // Set the end of the range to be the end of the range which
-                // includes elements smaller than the pivot
+                // Set the end of the range to be the end of the range
+                // which includes elements smaller than the pivot
                 stop = indices.first;
             }
 
@@ -570,6 +594,20 @@ namespace sort {
         }
 
         delete st;
+
+        // std::list<std::thread> threads;
+
+        // while ( start < stop ) {
+        //     std::pair<T, T> indices = sort::partition(stop, start, CHUNK);
+        //     threads.push_back(std::thread([indices, stop] () {
+        //         sort::quicksort(indices.second, stop, CHUNK);
+        //     }));
+        //     stop = indices.first;
+        // }
+
+        // for ( auto &t : threads ) {
+        //     t.join();
+        // }
     }
 
     // In-place quicksort on the elements in the range [start, stop)
@@ -612,8 +650,7 @@ namespace sort {
                 }
 
                 // Partition the given range using the default chunk size
-                std::pair<T, T> indices = 
-                    sort::partition(start, stop, CHUNK);
+                std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
 
                 // Push the range which includes elements larger than the
                 // pivot onto the stack
@@ -664,10 +701,11 @@ namespace sort {
     }
 
     template<typename T>
-    void parallel_introsort(T start, T stop, unsigned depth, 
-                            unsigned nthread) {
+    inline void parallel_introsort(T start, T stop, unsigned nthread) {
         std::thread *threads = new std::thread[nthread];
         unsigned part = (stop - start) / nthread;
+        // Set a default maximum recursion depth of 1.5 * log(n)
+        unsigned depth = 1.5 * log2(part) + 1;
 
         for ( unsigned i = 0; i < nthread - 1; ++i ) {
             threads[i] = std::thread([start, i, part, depth] () {
@@ -689,10 +727,7 @@ namespace sort {
     // In-place (parallel) introsort on the elements in the range [start, stop)
     template<typename T>
     void parallel_introsort(T start, T stop) {
-        // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned max = 1.5 * log2(stop - start) + 1;
-
-        sort::parallel_introsort(start, stop, max, THREADS);
+        sort::parallel_introsort(start, stop, THREADS);
     }
 }
 
