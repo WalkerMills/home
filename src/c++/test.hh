@@ -7,10 +7,12 @@
 #include <vector>
 #include <cmath>
 
+// #include <mpi.h>
+
 #include "sort.hh"
 
 #define SAMPLES 10
-#define SIZE 1000000
+#define SIZE 100000
 
 
 typedef void (*array_fp)(unsigned *start, unsigned *stop);
@@ -61,23 +63,37 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
     T **arrays = gen_arrays(samples, size);
     double *res = new double[samples];
 
-    std::chrono::microseconds elapsed;
+    std::chrono::microseconds delta;
     std::chrono::high_resolution_clock::time_point start, end;
 
+#pragma omp parallel shared(arrays, res) private(start, end, delta)
+{
+    #pragma omp for
     for ( unsigned i = 0; i < samples; ++i ) {
         start = std::chrono::high_resolution_clock::now();
         fp(arrays[i], arrays[i] + size);
         end = std::chrono::high_resolution_clock::now();
-        elapsed = 
+        delta = 
             std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        res[i] = (double) SIZE / elapsed.count();
+        res[i] = (double) SIZE / delta.count();
     }
 
+    #pragma omp for
     for ( unsigned i = 0; i < samples; ++i ) {
+        if ( ! sort::check(arrays[i], arrays[i] + SIZE) ) {
+            #pragma omp critical
+            sort::show(arrays[i], arrays[i] + SIZE);
+        }
+
         delete [] arrays[i];
     }
-    delete [] arrays;
+}
+    delete [] arrays;    
 
+    for ( unsigned i = 0; i < SAMPLES; ++i ) {
+        std::cout << res[i] << ", ";
+    }
+    std::cout << std::endl;
     double mu = mean(res, res + SAMPLES);
     double sigma = stddev(res, res + SAMPLES, mu);
 

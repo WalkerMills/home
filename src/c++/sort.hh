@@ -398,13 +398,12 @@ namespace sort {
 
         for ( T i = start + 1; i < stop; ++i ) {
             auto value = *i;
-            left = start;
             right = i;
             step = 1;
 
             // Assuming that the elements in the range [start, i) are sorted,
             // find the correct insertion point
-            do {
+            for ( left = start; left + step <= right; ) {
                 // Start near i and take increasingly large steps
                 center = right - step;
                 step <<= 1;
@@ -414,7 +413,7 @@ namespace sort {
                 } else {
                     left = center + 1;
                 }
-            } while ( left + step <= right );
+            }
 
             // Perform a binary search
             while ( left < right ) {
@@ -509,10 +508,11 @@ namespace sort {
 
         while ( true ) {
             // Increment i while its value is less than the pivot
-            while ( *++i < *start )
+            while ( *++i < *start ) if ( i == stop - 1 ) break;
 
             // Decrement j while its value is greater than the pivot
-            while ( *start < *--j )
+            while ( *start < *--j ) if ( j == start ) break;
+
 
             // i and j have crossed
             if ( i == j && *i == *start ) std::iter_swap(i, ++p);
@@ -531,7 +531,6 @@ namespace sort {
         // Swap pivot values into place in the array such that all preceding
         // elements are smaller, and all following elements are larger
         i = j + 1;
-
         for ( T k = start; k <= p; ++k ) std::iter_swap(k, j--);
         for ( T k = stop - 1; k >= q; --k ) std::iter_swap(k, i++);
 
@@ -547,7 +546,7 @@ namespace sort {
         if ( n <= 1 ) {
             return std::make_pair(start, stop);
         } else if ( n == 2 ) {
-            if ( *start > *stop ) std::iter_swap(start, stop);
+            if ( *start > *(stop - 1) ) std::iter_swap(start, stop - 1);
             return std::make_pair(start, stop);
         } else if ( n <= chunk ) {
             // Perform insertion sort on any chunk smaller than the given
@@ -557,7 +556,6 @@ namespace sort {
         }
         return ungarded_partition(start, stop);
     }
-
 
     // In-place quicksort on the elements in the range [start, stop), with the
     // given chunk size
@@ -594,20 +592,6 @@ namespace sort {
         }
 
         delete st;
-
-        // std::list<std::thread> threads;
-
-        // while ( start < stop ) {
-        //     std::pair<T, T> indices = sort::partition(stop, start, CHUNK);
-        //     threads.push_back(std::thread([indices, stop] () {
-        //         sort::quicksort(indices.second, stop, CHUNK);
-        //     }));
-        //     stop = indices.first;
-        // }
-
-        // for ( auto &t : threads ) {
-        //     t.join();
-        // }
     }
 
     // In-place quicksort on the elements in the range [start, stop)
@@ -642,7 +626,7 @@ namespace sort {
 
         while ( ! st->empty() ) {
             while ( start < stop ) {
-                if ( --depth < 0 ) {
+                if ( --depth > 1 ) {
                     // If we've exceeded the maximum depth, smoothsort the
                     // remaining elements
                     sort::smoothsort(start, stop);
