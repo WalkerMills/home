@@ -9,7 +9,7 @@
 
 #include "sort.hh"
 
-#define SAMPLES 100
+#define SAMPLES 10
 #define SIZE 1000000
 
 
@@ -56,13 +56,12 @@ double stddev(T start, T stop) {
     return stddev(start, stop, mu);
 }
 
-template<typename T>
-std::pair<double, double> benchmark(unsigned samples, unsigned size, 
-                                    void (*fp)(T *, T *)) {
+template<typename T, typename F>
+std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
     T **arrays = gen_arrays(samples, size);
     double *res = new double[samples];
 
-    std::chrono::microseconds elapsed = std::chrono::microseconds::zero();
+    std::chrono::microseconds elapsed;
     std::chrono::high_resolution_clock::time_point start, end;
 
     for ( unsigned i = 0; i < samples; ++i ) {
@@ -74,12 +73,15 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size,
         res[i] = (double) SIZE / elapsed.count();
     }
 
+    for ( unsigned i = 0; i < samples; ++i ) {
+        delete [] arrays[i];
+    }
     delete [] arrays;
 
     double mu = mean(res, res + SAMPLES);
     double sigma = stddev(res, res + SAMPLES, mu);
 
-    delete res;
+    delete [] res;
 
     return std::make_pair(mu, sigma);
 }
