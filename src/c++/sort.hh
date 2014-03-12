@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "Timsort.hh"
+#include "timsort.hpp"
 
 // The maximum size of an array which will choose the median as the pivot
 // for partitioning
@@ -23,7 +23,7 @@
 #define CHUNK 16
 
 // Number of threads to use for multithreading quicksort
-#define THREADS 4
+#define THREADS 3
 
 // Type large enough to contain any Leonardo number
 typedef unsigned long leonardo_t;
@@ -563,19 +563,21 @@ namespace sort {
     void quicksort(T start, T stop, unsigned chunk) {
         // Make a stack for holding pairs of iterators representing the
         // non-inclusive range [first, second)
-        std::stack<std::pair<T, T>> *st = new std::stack<std::pair<T, T>>();
+        std::stack<std::pair<T, T>> st;
+        // std::vector<std::thread> threads;
 
         // Push a terminal element onto the stack
-        st->push(std::make_pair(start, start));
+        st.push(std::make_pair(start, start));
 
-        while ( ! st->empty() ) {
+        while ( ! st.empty() ) {
             while ( start < stop ) {
                 // Partition the given range using the default chunk size
                 std::pair<T, T> indices = sort::partition(start, stop, CHUNK);
 
                 // Push the range which includes elements larger than the
                 // pivot onto the stack
-                st->push(std::make_pair(indices.second, stop));
+                st.push(std::make_pair(indices.second, stop));
+                
 
                 // Set the end of the range to be the end of the range
                 // which includes elements smaller than the pivot
@@ -583,15 +585,13 @@ namespace sort {
             }
 
             // Retrieve the next range from the stack
-            std::pair<T, T> indices = st->top();
-            st->pop();
+            std::pair<T, T> indices = st.top();
+            st.pop();
 
             // Set the next range
             start = indices.first;
             stop = indices.second;
         }
-
-        delete st;
     }
 
     // In-place quicksort on the elements in the range [start, stop)
@@ -612,6 +612,30 @@ namespace sort {
         sort::quicksort(input, input + n, CHUNK);
     }
 
+    template<typename T>
+    inline void parallel_quicksort(T start, T stop, unsigned const nthread) {
+        if ( stop <= start ) {
+            return;
+        }
+
+        std::vector<std::thread> threads;
+        unsigned part = (stop - start) / nthread;
+
+        #pragma omp parallel for
+        for ( unsigned i = 0; i < nthread - 1; ++i ) {
+            sort::quicksort(start + i * part, start + (i + 1) * part);
+        }
+        sort::quicksort(start + (nthread - 1) * part, stop); 
+
+        gfx::timsort(start, stop);
+    }
+
+    // In-place (parallel) quicksort on the elements in the range [start, stop)
+    template<typename T>
+    void parallel_quicksort(T start, T stop) {
+        sort::parallel_quicksort(start, stop, THREADS);
+    }
+
 
     // In-place introsort on the elements in the range [start, stop) with
     // parametrized depth 
@@ -629,7 +653,8 @@ namespace sort {
                 if ( --depth > 1 ) {
                     // If we've exceeded the maximum depth, smoothsort the
                     // remaining elements
-                    sort::smoothsort(start, stop);
+                    // sort::smoothsort(start, stop);
+                    gfx::timsort(start, stop);
                     break;
                 }
 
@@ -661,7 +686,7 @@ namespace sort {
     template<typename T>
     void introsort(T start, T stop) {
         // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned max = 1.5 * log2(stop - start) + 1;
+        unsigned max = 2 * log2(stop - start) + 1;
 
         sort::introsort(start, stop, max);
     }
@@ -670,7 +695,7 @@ namespace sort {
     template<typename T>
     void introsort(T &input) {
         // Set a default maximum recursion depth of 2 * log(n)
-        unsigned max = 1.5 * log2(input.size()) + 1;
+        unsigned max = 2 * log2(input.size()) + 1;
 
         sort::introsort(input.begin(), input.end(), max);
     }
@@ -679,7 +704,7 @@ namespace sort {
     template<typename T>
     void introsort(T *input, unsigned n) {
         // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned max = 1.5 * log2(n) + 1;
+        unsigned max = 2 * log2(n) + 1;
 
         sort::introsort(input, input + n, max);
     }
@@ -694,25 +719,14 @@ namespace sort {
         unsigned part = (stop - start) / nthread;
 
         // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned depth = 1.5 * log2(part) + 1;
+        unsigned depth = 2 * log(part) + 1;
 
+        #pragma omp parallel for
         for ( unsigned i = 0; i < nthread - 1; ++i ) {
-            threads.push_back(std::thread(
-                [start, i, part, depth] () {
-                    sort::introsort(start + i * part, start + (i + 1) * part, 
-                                    depth);
-            }));
-        }
-        threads.push_back(std::thread(
-            [start, nthread, part, stop, depth] () {
-                sort::introsort(start + (nthread - 1) * part, stop, depth); 
-        }));
-
-        for ( std::vector<std::thread>::iterator it = threads.begin();
-              it < threads.end(); ++it ) {
-            it->join();
+            sort::introsort(start + i * part, start + (i + 1) * part, depth);
         }
 
+        sort::introsort(start + (nthread - 1) * part, stop, depth); 
         gfx::timsort(start, stop);
     }
 

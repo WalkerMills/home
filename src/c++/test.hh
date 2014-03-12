@@ -11,7 +11,7 @@
 
 #include "sort.hh"
 
-#define SAMPLES 10
+#define SAMPLES 100
 #define SIZE 100000
 
 
@@ -82,7 +82,8 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
     for ( unsigned i = 0; i < samples; ++i ) {
         if ( ! sort::check(arrays[i], arrays[i] + SIZE) ) {
             #pragma omp critical
-            sort::show(arrays[i], arrays[i] + SIZE);
+            std::cerr << "Warning: sample " << i << " is not sorted" 
+                      << std::endl;
         }
 
         delete [] arrays[i];
@@ -90,10 +91,6 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
 }
     delete [] arrays;    
 
-    for ( unsigned i = 0; i < SAMPLES; ++i ) {
-        std::cout << res[i] << ", ";
-    }
-    std::cout << std::endl;
     double mu = mean(res, res + SAMPLES);
     double sigma = stddev(res, res + SAMPLES, mu);
 

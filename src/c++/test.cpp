@@ -11,6 +11,7 @@
 
 #include "sort.hh"
 #include "test.hh"
+#include "timsort.hpp"
 
 
 unsigned **gen_arrays(unsigned samples, unsigned size) {
@@ -52,10 +53,12 @@ int main(int argc, char **argv) {
         &std::sort<unsigned *>,
         &std::stable_sort<unsigned *>,
         // &sort::insertion_sort<unsigned *>,
+        &sort::smoothsort<unsigned *>,
         &sort::quicksort<unsigned *>,
-        // &sort::smoothsort<unsigned *>,
         &sort::introsort<unsigned *>,
-        &sort::parallel_introsort<unsigned *>
+        &sort::parallel_quicksort<unsigned *>,
+        &sort::parallel_introsort<unsigned *>,
+        &gfx::timsort
     };
 
     unsigned i = 0;
@@ -76,21 +79,29 @@ int main(int argc, char **argv) {
                 ++i;
 
             case 3:
-                std::cout << "Quicksort:" << std::endl;
+                std::cout << "Smoothsort:" << std::endl;
                 break;
                 // ++i;
 
             case 4:
-                // std::cout << "Smoothsort:" << std::endl;
-                // break;
-                ++i;
+                std::cout << "Quicksort:" << std::endl;
+                break;
+                // ++i;
 
             case 5:
                 std::cout << "Introsort:" << std::endl;
                 break;
 
             case 6:
+                std::cout << "Parallelized quicksort:" << std::endl;
+                break;
+
+            case 7:
                 std::cout << "Parallelized introsort:" << std::endl;
+                break;
+
+            case 8:
+                std::cout << "Timsort (gfx):" << std::endl;
                 break;
 
             default:
