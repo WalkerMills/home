@@ -11,8 +11,9 @@
 
 #include "sort.hh"
 
+// Default number of samples for benchmarking 
 #define SAMPLES 100
-#define SIZE 100000
+#define SIZE 1000000
 
 
 typedef void (*array_fp)(unsigned *start, unsigned *stop);
@@ -58,6 +59,7 @@ double stddev(T start, T stop) {
     return stddev(start, stop, mu);
 }
 
+// Benchmark a sorting algorithm and check it for correctness
 template<typename T, typename F>
 std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
     T **arrays = gen_arrays(samples, size);
@@ -66,8 +68,9 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
     std::chrono::microseconds delta;
     std::chrono::high_resolution_clock::time_point start, end;
 
-#pragma omp parallel shared(arrays, res) private(start, end, delta)
+#pragma omp parallel default(shared) private(start, end, delta)
 {
+    // Benchmark the sorting algorithm
     #pragma omp for
     for ( unsigned i = 0; i < samples; ++i ) {
         start = std::chrono::high_resolution_clock::now();
@@ -78,6 +81,7 @@ std::pair<double, double> benchmark(unsigned samples, unsigned size, F fp) {
         res[i] = (double) SIZE / delta.count();
     }
 
+    // Check that all samples were sorted correctly
     #pragma omp for
     for ( unsigned i = 0; i < samples; ++i ) {
         if ( ! sort::check(arrays[i], arrays[i] + SIZE) ) {

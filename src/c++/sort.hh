@@ -4,42 +4,53 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
-#include <list>
 #include <sstream>
 #include <stack>
-#include <thread>
 #include <utility>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <ctime>
+
+#include <omp.h>
 
 #include "timsort.hpp"
 
 // The maximum size of an array which will choose the median as the pivot
 // for partitioning
-#define SMALL 40 
+#define SMALL 120
 
 // Number of elements that trigger insertion sort from quicksort by default
-#define CHUNK 16
+#define CHUNK 100
+
+// If there are more than SMOOTH elements when introsort reaches maximum
+// recursion depth, use smoothsort; otherwise, use shellsort
+#define SMOOTH 10000
 
 // Number of threads to use for multithreading quicksort
 #define THREADS 3
 
+// Set a default maximum recursion depth (for introsort) of 2 * log(n)
+#define DEPTH(n) 2 * log2(n) + 1
+
 // Type large enough to contain any Leonardo number
-typedef unsigned long leonardo_t;
+typedef uint32_t leonardo_t;
+
+// Type large enough to contain any number in Ciura's shell sort gap sequence
+typedef uint8_t gap_t;
 
 // Struct for holding the sizes of existing heaps
 typedef struct {
     // Sizes of existing heaps (right shifted so that the last bit is a 1)
-    unsigned long long mask;
+    uint64_t mask;
     // Size of the smallest heap (mask << offset == unshifted mask)
-    unsigned offset;
+    uint32_t offset;
 } heapsize_t;
 
 
 namespace sort {
     // Number of Leonardo numbers smaller than 2^32
-    const unsigned num_leonardo = 46;
+    const uint8_t num_leonardo = 46;
 
     // Precomputed array of Leonardo numbers smaller than 2^32
     const leonardo_t leonardo_numbers[num_leonardo] = {
@@ -51,6 +62,14 @@ namespace sort {
         126491971UL, 204668309UL, 331160281UL, 535828591UL, 866988873UL, 
         1402817465UL, 2269806339UL, 3672623805UL
     };
+
+    // Number of elements in the shell sort gap sequence (Ciura, 2001)
+    const uint8_t num_gaps = 6;
+
+    // Precomputed gap sequence array
+    const gap_t gaps[num_gaps] = {
+        132U, 57U, 23U, 10U, 4U, 1U
+    }; 
 
     // Numeric type (with ++ and -- overloads) for keeping track of
     // Djikstra's b and c for smoothsort (produces precomputed values
@@ -184,6 +203,98 @@ namespace sort {
     template<typename T>
     bool show(T input) {
         return sort::show(input.begin(), input.end());
+    }
+
+
+    // In-place insertion sort on the elements in the range [first, last)
+    template<typename T>
+    void insertion_sort(T start, T stop) {
+        T left, right, center;
+        unsigned step;
+
+        for ( T i = start + 1; i < stop; ++i ) {
+            auto value = *i;
+            right = i;
+            step = 1;
+
+            // Assuming that the elements in the range [start, i) are sorted,
+            // find the correct insertion point
+            for ( left = start; left + step <= right; ) {
+                // Start near i and take increasingly large steps
+                center = right - step;
+                step <<= 1;
+
+                if ( value < *center ) {
+                    right = center;
+                } else {
+                    left = center + 1;
+                }
+            }
+
+            // Perform a binary search
+            while ( left < right ) {
+                center = left + (right - left) / 2;
+
+                if ( value < *center ) {
+                    right = center;
+                } else {
+                    left = center + 1;
+                }
+            }
+
+            // Chain swap elements into place
+            T j = i;
+            for ( ; j > left; --j ) {
+                *j = *(j - 1);
+            }
+            // Put the original value in the correct position
+            *j = value;
+        }
+    }
+
+    // In-place insertion sort on all the elements in the container
+    template<typename T>
+    void insertion_sort(T &input) {
+        sort::insertion_sort(input.begin(), input.end());
+    }
+
+    // In-place insertion sort on the first n elements of the input array
+    template<typename T>
+    void insertion_sort(T *input, unsigned size) {
+        sort::insertion_sort(input, input + size);
+    }
+
+
+    template<typename T>
+    inline void phase(T start, T stop, gap_t gap) {
+        for ( T i = start + gap; i < stop; ++i ) {
+            auto value = *i;
+
+            // Chain swap elements into place
+            T j = i - gap;
+            for ( ; j >= start && *j > value; j -= gap ) {
+                *(j + gap) = *j;
+            }
+            // Put the original value in the correct position
+            *(j + gap) = value;
+        }
+    }
+
+    template<typename T>
+    void shellsort(T start, T stop) {
+        for ( uint8_t i = 0; i < num_gaps; ++i ) {
+            sort::phase(start, stop, sort::gaps[i]);
+        }
+    }
+
+    template<typename T>
+    void shellsort(T &input) {
+        sort::shellsort(input.begin(), input.end());
+    }
+
+    template<typename T>
+    void shellsort(T *input, unsigned size) {
+        sort::shellsort(input, input + size);
     }
 
 
@@ -390,65 +501,6 @@ namespace sort {
     }
 
 
-    // In-place insertion sort on the elements in the range [first, last)
-    template<typename T>
-    void insertion_sort(T start, T stop) {
-        T left, right, center;
-        unsigned step;
-
-        for ( T i = start + 1; i < stop; ++i ) {
-            auto value = *i;
-            right = i;
-            step = 1;
-
-            // Assuming that the elements in the range [start, i) are sorted,
-            // find the correct insertion point
-            for ( left = start; left + step <= right; ) {
-                // Start near i and take increasingly large steps
-                center = right - step;
-                step <<= 1;
-
-                if ( value < *center ) {
-                    right = center;
-                } else {
-                    left = center + 1;
-                }
-            }
-
-            // Perform a binary search
-            while ( left < right ) {
-                center = left + (right - left) / 2;
-
-                if ( value < *center ) {
-                    right = center;
-                } else {
-                    left = center + 1;
-                }
-            }
-
-            // Chain swap elements into place
-            T j = i;
-            for ( ; j > left; --j ) {
-                *j = *(j - 1);
-            }
-            // Put the original value in the correct position
-            *j = value;
-        }
-    }
-
-    // In-place insertion sort on all the elements in the container
-    template<typename T>
-    void insertion_sort(T &input) {
-        sort::insertion_sort(input.begin(), input.end());
-    }
-
-    // In-place insertion sort on the first n elements of the input array
-    template<typename T>
-    void insertion_sort(T *input, unsigned size) {
-        sort::insertion_sort(input, input + size);
-    }
-
-
     // Calculate the median of three values
     template<typename T>
     inline T medianOf3(T a, T b, T c) {
@@ -513,7 +565,6 @@ namespace sort {
             // Decrement j while its value is greater than the pivot
             while ( *start < *--j ) if ( j == start ) break;
 
-
             // i and j have crossed
             if ( i == j && *i == *start ) std::iter_swap(i, ++p);
 
@@ -551,7 +602,7 @@ namespace sort {
         } else if ( n <= chunk ) {
             // Perform insertion sort on any chunk smaller than the given
             // cutoff
-            sort::insertion_sort(start, stop);
+            sort::shellsort(start, stop);
             return std::make_pair(start, stop);
         }
         return ungarded_partition(start, stop);
@@ -564,7 +615,6 @@ namespace sort {
         // Make a stack for holding pairs of iterators representing the
         // non-inclusive range [first, second)
         std::stack<std::pair<T, T>> st;
-        // std::vector<std::thread> threads;
 
         // Push a terminal element onto the stack
         st.push(std::make_pair(start, start));
@@ -617,16 +667,14 @@ namespace sort {
         if ( stop <= start ) {
             return;
         }
-
-        std::vector<std::thread> threads;
         unsigned part = (stop - start) / nthread;
 
-        #pragma omp parallel for
+        #pragma omp parallel for default(shared)
         for ( unsigned i = 0; i < nthread - 1; ++i ) {
             sort::quicksort(start + i * part, start + (i + 1) * part);
         }
-        sort::quicksort(start + (nthread - 1) * part, stop); 
 
+        sort::quicksort(start + (nthread - 1) * part, stop); 
         gfx::timsort(start, stop);
     }
 
@@ -653,8 +701,11 @@ namespace sort {
                 if ( --depth > 1 ) {
                     // If we've exceeded the maximum depth, smoothsort the
                     // remaining elements
-                    // sort::smoothsort(start, stop);
-                    gfx::timsort(start, stop);
+                    if ( stop - start > SMOOTH ) {
+                        sort::smoothsort(start, stop);
+                    } else {
+                        sort::shellsort(start, stop);
+                    }
                     break;
                 }
 
@@ -685,28 +736,19 @@ namespace sort {
     // In-place introsort on the elements in the range [start, stop)
     template<typename T>
     void introsort(T start, T stop) {
-        // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned max = 2 * log2(stop - start) + 1;
-
-        sort::introsort(start, stop, max);
+        sort::introsort(start, stop, DEPTH(stop - start));
     }
 
     // In-place introsort on the input container
     template<typename T>
     void introsort(T &input) {
-        // Set a default maximum recursion depth of 2 * log(n)
-        unsigned max = 2 * log2(input.size()) + 1;
-
-        sort::introsort(input.begin(), input.end(), max);
+        sort::introsort(input.begin(), input.end(), DEPTH(input.size()));
     }
 
     // In-place introsort on the first n elements of the input array
     template<typename T>
     void introsort(T *input, unsigned n) {
-        // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned max = 2 * log2(n) + 1;
-
-        sort::introsort(input, input + n, max);
+        sort::introsort(input, input + n, DEPTH(n));
     }
 
     template<typename T>
@@ -714,14 +756,10 @@ namespace sort {
         if ( stop <= start ) {
             return;
         }
-
-        std::vector<std::thread> threads;
         unsigned part = (stop - start) / nthread;
+        unsigned depth = DEPTH(part);
 
-        // Set a default maximum recursion depth of 1.5 * log(n)
-        unsigned depth = 2 * log(part) + 1;
-
-        #pragma omp parallel for
+        #pragma omp parallel for default(shared)
         for ( unsigned i = 0; i < nthread - 1; ++i ) {
             sort::introsort(start + i * part, start + (i + 1) * part, depth);
         }

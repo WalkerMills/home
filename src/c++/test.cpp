@@ -1,13 +1,7 @@
-#include <chrono>
-#include <fstream>
 #include <iostream>
-#include <cstdio>
+#include <map>
 #include <cstdlib>
 #include <ctime>
-
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 #include "sort.hh"
 #include "test.hh"
@@ -49,127 +43,30 @@ std::vector<unsigned> *gen_vectors(unsigned samples, unsigned size) {
 }
 
 int main(int argc, char **argv) {
-    std::vector<array_fp> const array_sorts = {
-        &std::sort<unsigned *>,
-        &std::stable_sort<unsigned *>,
-        // &sort::insertion_sort<unsigned *>,
-        &sort::smoothsort<unsigned *>,
-        &sort::quicksort<unsigned *>,
-        &sort::introsort<unsigned *>,
-        &sort::parallel_quicksort<unsigned *>,
-        &sort::parallel_introsort<unsigned *>,
-        &gfx::timsort
+    std::map<char *, array_fp> const sorts = {
+        {"stl sort", &std::sort<unsigned *>},
+        {"stl stable sort", &std::stable_sort<unsigned *>},
+        // {"insertion sort", &sort::insertion_sort<unsigned *>},
+        // {"shellsort", &sort::shellsort<unsigned *>},
+        {"smoothsort", &sort::smoothsort<unsigned *>},
+        {"quicksort", &sort::quicksort<unsigned *>},
+        {"introsort", &sort::introsort<unsigned *>},
+        {"parallel quicksort", &sort::parallel_quicksort<unsigned *>},
+        {"parallel introsort", &sort::parallel_introsort<unsigned *>},
+        // {"timsort", &gfx::timsort}
     };
 
-    unsigned i = 0;
-
-    for ( auto &fp : array_sorts ) {
-        switch ( i ) {
-            case 0:
-                std::cout << "STL sort:" << std::endl;
-                break;
-
-            case 1:
-                std::cout << "STL stable sort:" << std::endl;
-                break;
-
-            case 2:
-                // std::cout << "Insertion sort:" << std::endl;
-                // break;
-                ++i;
-
-            case 3:
-                std::cout << "Smoothsort:" << std::endl;
-                break;
-                // ++i;
-
-            case 4:
-                std::cout << "Quicksort:" << std::endl;
-                break;
-                // ++i;
-
-            case 5:
-                std::cout << "Introsort:" << std::endl;
-                break;
-
-            case 6:
-                std::cout << "Parallelized quicksort:" << std::endl;
-                break;
-
-            case 7:
-                std::cout << "Parallelized introsort:" << std::endl;
-                break;
-
-            case 8:
-                std::cout << "Timsort (gfx):" << std::endl;
-                break;
-
-            default:
-                break;
-        }
-        ++i;
-
-        std::pair<double, double> res = benchmark<unsigned>(SAMPLES, SIZE, fp);
+    for ( std::map<char *, array_fp>::const_iterator it = sorts.begin();
+          it != sorts.end(); ++it ) {
+        std::cout << it->first << ':' << std::endl;
+        std::pair<double, double> res = 
+            benchmark<unsigned>(SAMPLES, SIZE, it->second);
         std::cout << res.first << " elements per microsecond, standard "
                      "deviation of " << res.second 
                   << " (" << 100 * res.second / res.first << "%) for "
                   << SAMPLES << " samples of " << SIZE << " elements"
                   << std::endl << std::endl;
     }
-
-    // std::ofstream ofs ("data.txt");
-    // pid_t cpid, wpid;
-    // int status;
-
-    // for ( unsigned i = 0; i <= SIZE; i += 10 ) {
-    //     for ( unsigned j = 1; j <= THREADS; ++j ) {
-    //         double *times = new double[THREADS];
-    //         double *deviations = new double[THREADS];
-
-    //         if ( (cpid = fork()) < 0 ) {
-    //             perror("fork error");
-    //             exit(EXIT_FAILURE);
-    //         } else if ( cpid == 0 ) {
-    //             std::pair<double, double> res = benchmark<unsigned>(SAMPLES, i,
-    //                 [j] (unsigned *start, unsigned *stop) {
-    //                     sort::parallel_introsort(start, stop, j);
-    //             });
-
-    //             times[j - 1] = res.first;
-    //             deviations[j - 1] = res.second;
-
-    //             exit(EXIT_SUCCESS);
-    //         } else {
-    //             if ( (wpid = wait(&status)) < 0 ) {
-    //                 perror("wait error");
-    //             } else {
-    //                 if ( WIFSIGNALED(status) != 0 ) {
-    //                     printf("Child process ended by signal %d\n",
-    //                            WTERMSIG(status));
-    //                 } else if ( WIFEXITED(status) != 0 && 
-    //                             WEXITSTATUS(status) != 0 ) {
-    //                     printf("Child process ended with status %d\n",
-    //                            WEXITSTATUS(status));
-    //                 } else {
-    //                     printf("Child process did not end normally\n");
-    //                 }
-    //             }
-    //         }
-
-    //         double mu = mean(times, times + SAMPLES);
-    //         double sigma = mean(deviations, deviations + SAMPLES);
-
-    //         std::cout << i << " elements, " << j << " threads, "
-    //                   << mu << " microseconds, standard deviation of "
-    //                   << sigma << std::endl;
-    //         ofs << i << ' ' << j << ' ' << mu << ' ' << sigma << std::endl;
-
-    //         delete [] times;
-    //         delete [] deviations;            
-    //     }
-    // }
-
-    // ofs.close();
 
     return 0;
 }
