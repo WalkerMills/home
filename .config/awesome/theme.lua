@@ -13,10 +13,12 @@ local wallpapers =
     home .. "/pictures/wg/abstract/8f2817b986487a1724887649826d7f85.jpg",
     home .. "/pictures/wg/abstract/1342785494029.jpg",
     home .. "/pictures/wg/space/1370139726202.jpg",
-    home .. "/pictures/wg/plain/129529188571.png"
+    home .. "/pictures/wg/plain/129529188571.png",
+    home .. "/pictures/wg/art/Ben-Applegarth-2948-Primary-Blue.jpg",
+    home .. "/pictures/wg/art/Ben-Applegarth-2948-Primary-Red.jpg"
 }
 
-theme.wallpaper = wallpapers[4]
+theme.wallpaper = wallpapers[6]
 
 if not awful.util.file_readable(theme.wallpaper) then
     local f = io.popen("find " .. home .. "/pictures/wg -readable -type f | grep -v templates | shuf -n 1 | xargs echo -n")

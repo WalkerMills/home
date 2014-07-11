@@ -1,3 +1,5 @@
+source /etc/profile
+
 if [[ -z $DISPLAY && $BITS -eq 64 ]]
 then
     if ! pulseaudio --check
@@ -5,7 +7,7 @@ then
         pulseaudio --start &
     fi
 
-    if [[ -z `process mpd` ]]
+    if [[ `pgrep -c mpd` -eq 0 ]]
     then
         mpd
     fi

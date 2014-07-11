@@ -122,7 +122,7 @@ mysystray = wibox.widget.systray()
 
 mpdwidget = wibox.widget.textbox()
 function mpd_status(widget)
-    local fd = io.popen("mpd_status")
+    local fd = io.popen("~/bin/mpd_status")
     local status = fd:read("*all")
     fd:close()
 
@@ -132,9 +132,29 @@ function mpd_status(widget)
 end
 
 mpd_status(mpdwidget)
-mpdtimer = timer({ timeout = 1 })
+mpdtimer = timer({ timeout = 5 })
 mpdtimer:connect_signal("timeout", function () mpd_status(mpdwidget) end)
 mpdtimer:start()
+
+-- Battery widget
+
+batwidget = wibox.widget.textbox()
+function bat_status(widget)
+    local fd = io.popen("~/bin/bat_status")
+    local status = fd:read("*all")
+    fd.close()
+
+    status = " " .. status .. " |"
+    awful.util.escape(status)
+    widget:set_markup(status)
+end
+
+bat_status(batwidget)
+
+bat_status(batwidget)
+battimer = timer({ timeout = 60 })
+battimer:connect_signal("timeout", function () bat_status(batwidget) end)
+battimer:start()
 
 -- Volume widget
 
@@ -161,7 +181,7 @@ function volume(widget)
 end
 
 volume(volumewidget)
-voltimer = timer({ timeout = .1 })
+voltimer = timer({ timeout = 5 })
 voltimer:connect_signal("timeout", function () volume(volumewidget) end)
 voltimer:start()
 
@@ -248,6 +268,7 @@ for s = 1, screen.count() do
     if s == 1 then right_layout:add(mysystray) end
     right_layout:add(mpdwidget)
     right_layout:add(volumewidget)
+    right_layout:add(batwidget)
     right_layout:add(datewidget)
     right_layout:add(mylayoutbox[s])
 

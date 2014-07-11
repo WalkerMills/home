@@ -20,16 +20,16 @@ upload_rate = 0
 schedule = filter_active,30,30,"view_filter = active,\"or={d.get_up_rate=,d.get_down_rate=}\""
 
 # Default directory to save the downloaded torrents.
-directory = /mnt/media
+directory = /home/walker/downloads/torrent
 
 # Default session directory. Make sure you don't run multiple instance
 # of rtorrent using the same session directory. Perhaps using a
 # relative path?
-#session = ./session
+session = ~/.rtorrent/session
 
 # Watch a directory for new torrents, and stop those that have been
 # deleted.
-schedule = watch_directory,5,5,load_start=/mnt/media/torrents/*.torrent
+schedule = watch_directory,5,5,load_start=~/downloads/torrent/torrents/*.torrent
 #schedule = untied_directory,5,5,stop_untied=
 
 # Close torrents when diskspace is low.
@@ -75,7 +75,7 @@ check_hash = no
 # "auto" (start and stop DHT as needed), or "on" (start DHT immediately).
 # The default is "off". For DHT to work, a session directory must be defined.
 # 
-# dht = auto
+dht = off
 
 # UDP port to use for DHT. 
 # 
@@ -83,4 +83,4 @@ check_hash = no
 
 # Enable peer exchange (for torrents not marked private)
 #
-# peer_exchange = yes
+peer_exchange = no

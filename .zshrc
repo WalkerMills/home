@@ -123,7 +123,7 @@ alias poweroff='systemctl poweroff'
 alias suspend='systemctl suspend'
 
 # Torrents
-alias torstart='mv ~/downloads/{*.torrent,torrents}'
+alias torstart='command mv ~/downloads/{*.torrent,torrent/torrents}'
 
 # Shell functions
 mirrors() {
