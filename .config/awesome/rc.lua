@@ -140,21 +140,18 @@ mpdtimer:start()
 
 volumewidget = wibox.widget.textbox()
 function volume(widget)
-    local fd = io.popen("amixer get Master")
+    local fd = io.popen("amixer get Master | grep Playback")
     local status = fd:read("*all")
     fd:close()
 
-    local volume = string.match(status, "(%d?%d?%d)%%")
-    volume = string.format("%3d", volume)
-    volume = volume:gsub("^%s*(.-)%s*$", "%1")
-    volume = "(" .. volume
+    local volume = string.match(status, "(%d+)%%")
+    local mute = string.match(status, "%[(o[^%]]*)%]")
 
-    status = string.match(status, "%[(o[^%]]*)%]")
-
-    if string.find(status, "on", 1, true) then
-      volume = volume .. "%) |"
+    volume = "[" .. volume
+    if string.find(mute, "on", 1, true) then
+      volume = volume .. "%] |"
     else
-      volume = volume .. "M) |"
+      volume = volume .. "M] |"
     end
 
     widget:set_markup(volume)
@@ -167,7 +164,7 @@ voltimer:start()
 
 -- Date widget
 datewidget = wibox.widget.textbox()
-vicious.register(datewidget, vicious.widgets.date, " %A, %b %d, %R ", 60)
+vicious.register(datewidget, vicious.widgets.date, " %A, %b %d, %T ", .5)
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -558,6 +555,6 @@ client.connect_signal("manage", function (c, startup)
     end
 end)
 
-client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
-client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+-- client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
+-- client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
