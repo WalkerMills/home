@@ -1,4 +1,4 @@
 personal
 ========
 
-Personal use projects (i.e., live in my home directory)
+Configuration files, customized themes, some simple shell scripts, etc.
